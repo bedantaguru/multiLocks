@@ -171,8 +171,9 @@ multi_lock  <- function(path, allowed_number_of_jobs, id, fresh = F){
 
   l <- new.env()
 
-  l$lock <- function(){
+  l$lock <- function(wait = Inf){
     it <- 0
+    t0 <- Sys.time()
     while(!lock_raw()){
       waiting_queue_resolver()
       it <- it +1
@@ -180,7 +181,15 @@ multi_lock  <- function(path, allowed_number_of_jobs, id, fresh = F){
         clean_deads()
         it <- 0
       }
+      t1 <- Sys.time()
+      td <- difftime(t1, t0, units = "secs")
+      if(td > wait){
+        break()
+      }
     }
+
+    lock_raw()
+
   }
 
   l$unlock <- function(){
